@@ -1,11 +1,11 @@
 // Configuração do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
-  authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
-  projectId: "meu-app-financeiro-4f6f4",
-  storageBucket: "meu-app-financeiro-4f6f4.firebasestorage.app",
-  messagingSenderId: "185525679690",
-  appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
+    apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
+    authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
+    projectId: "meu-app-financeiro-4f6f4",
+    storageBucket: "meu-app-financeiro-4f6f4.appspot.com",
+    messagingSenderId: "185525679690",
+    appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
 };
 
 // Inicializa o Firebase
@@ -17,6 +17,8 @@ const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM completamente carregado');
+    
     // Elementos da interface
     const loginModal = document.getElementById('loginModal');
     const googleLoginBtn = document.getElementById('googleLoginBtn');
@@ -28,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsUserPhoto = document.getElementById('settings-user-photo');
     const userEmail = document.getElementById('user-email');
     const userNameInput = document.getElementById('user-name');
+    const menuItems = document.querySelectorAll('.menu-item');
     
     // Elementos financeiros
     const mesSelect = document.getElementById('mesSelecionado');
@@ -41,12 +44,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Elementos de configuração
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     
-    let savedCalculations = JSON.parse(localStorage.getItem('savedCalculations')) || [];
+    let savedCalculations = [];
+    try {
+        savedCalculations = JSON.parse(localStorage.getItem('savedCalculations')) || [];
+    } catch (e) {
+        console.error('Erro ao ler localStorage:', e);
+        savedCalculations = [];
+    }
 
     // Configura data atual
     const hoje = new Date();
     mesSelect.value = hoje.getMonth();
     anoInput.value = hoje.getFullYear();
+
+    // Adiciona gastos padrão inicialmente
+    adicionarGasto('Moradia', 521.66);
+    adicionarGasto('Alimentação', 130);
+    adicionarGasto('Transporte', 50);
 
     // Event listeners
     addGastoBtn.addEventListener('click', () => adicionarGasto('', 0));
@@ -55,20 +69,41 @@ document.addEventListener('DOMContentLoaded', function() {
     anoInput.addEventListener('change', atualizarDiasUteis);
     logoutBtn.addEventListener('click', signOut);
     saveSettingsBtn.addEventListener('click', saveSettings);
-
-    // Configura o listener para o botão de login com Google
     googleLoginBtn.addEventListener('click', signInWithGoogle);
+
+    // Navegação entre páginas
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageId = this.getAttribute('data-page');
+            showPage(pageId);
+            
+            // Atualiza menu ativo
+            document.querySelectorAll('nav ul li').forEach(li => {
+                li.classList.remove('active');
+            });
+            this.parentElement.classList.add('active');
+        });
+    });
+
+    // Mostra uma página específica
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        document.getElementById(pageId).classList.add('active');
+    }
 
     // Função para login com Google
     function signInWithGoogle() {
+        console.log('Iniciando login com Google...');
         auth.signInWithPopup(provider)
             .then(async (result) => {
-                // Usuário logado com sucesso
+                console.log('Login bem-sucedido:', result.user);
                 const user = result.user;
                 
-                // Verifica se é um novo usuário
                 if (result.additionalUserInfo.isNewUser) {
-                    // Salva informações adicionais do usuário no Firestore
+                    console.log('Novo usuário, criando registro...');
                     await db.collection('users').doc(user.uid).set({
                         name: user.displayName,
                         email: user.email,
@@ -83,50 +118,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 
-                // Esconde o modal e mostra o app
                 loginModal.style.display = 'none';
                 appContainer.style.display = 'flex';
-                
-                // Atualiza a UI com os dados do usuário
                 updateUserUI(user);
-                
-                // Carrega os dados financeiros
                 await loadFinancialData(user.uid);
             })
             .catch((error) => {
-                // Trata erros
+                console.error('Erro no login:', error);
                 showMessage(loginMessage, getFirebaseErrorMessage(error), 'error');
             });
     }
 
     // Função para logout
     function signOut() {
-        // Salva os dados antes de sair
-        calcularResumo()
-            .then(() => auth.signOut())
+        console.log('Realizando logout...');
+        auth.signOut()
+            .then(() => {
+                console.log('Logout bem-sucedido');
+                loginModal.style.display = 'flex';
+                appContainer.style.display = 'none';
+            })
             .catch(error => {
-                console.error('Erro ao salvar dados antes de sair:', error);
-                auth.signOut();
+                console.error('Erro no logout:', error);
             });
     }
 
     // Função para atualizar a UI com os dados do usuário
     function updateUserUI(user) {
+        console.log('Atualizando UI com dados do usuário:', user);
         if (user.photoURL) {
             userPhoto.src = user.photoURL;
             settingsUserPhoto.src = user.photoURL;
-        } else {
-            userPhoto.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
-            settingsUserPhoto.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
         }
         
-        userName.textContent = user.displayName || 'Usuário';
-        userNameInput.value = user.displayName || '';
-        userEmail.value = user.email || '';
+        if (user.displayName) {
+            userName.textContent = user.displayName;
+            userNameInput.value = user.displayName;
+        }
+        
+        if (user.email) {
+            userEmail.value = user.email;
+        }
     }
 
     // Função para salvar configurações
     async function saveSettings() {
+        console.log('Salvando configurações...');
         const user = auth.currentUser;
         if (!user) return;
 
@@ -142,40 +179,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 settings: settings
             });
             
-            // Aplica o tema selecionado
             applyTheme(settings.theme, settings.accentColor);
-            
             showMessage(loginMessage, 'Configurações salvas com sucesso!', 'success');
+            console.log('Configurações salvas com sucesso');
         } catch (error) {
+            console.error('Erro ao salvar configurações:', error);
             showMessage(loginMessage, 'Erro ao salvar configurações: ' + error.message, 'error');
         }
     }
 
     // Observador de estado de autenticação
     auth.onAuthStateChanged(async (user) => {
+        console.log('Estado de autenticação alterado:', user);
         if (user) {
-            // Usuário logado
             loginModal.style.display = 'none';
             appContainer.style.display = 'flex';
-            
-            // Atualiza a UI com os dados do usuário
             updateUserUI(user);
             
-            // Carrega as configurações do usuário
             const userData = await loadUserData(user.uid);
             if (userData && userData.settings) {
                 applySettings(userData.settings);
             }
             
-            // Carrega os dados financeiros
             await loadFinancialData(user.uid);
-            
-            // Atualiza a interface
             atualizarDiasUteis();
             calcularVTemTempoReal();
             updateSavedTabs();
         } else {
-            // Usuário não logado
             loginModal.style.display = 'flex';
             appContainer.style.display = 'none';
         }
@@ -205,33 +235,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function applyTheme(theme, accentColor) {
-        // Implemente a lógica para alterar o tema conforme necessário
-        console.log('Tema aplicado:', theme, 'Cor de destaque:', accentColor);
-        // Você pode adicionar classes CSS ou modificar variáveis CSS conforme o tema selecionado
+        console.log(`Aplicando tema: ${theme}, cor: ${accentColor}`);
+        // Implementação real da mudança de tema
     }
 
     function applySettings(settings) {
         if (!settings) return;
         
-        // Aplica o tema
         document.getElementById('theme-selector').value = settings.theme || 'dark';
-        applyTheme(settings.theme, settings.accentColor);
-        
-        // Aplica as configurações de notificação
         document.getElementById('emailNotifications').checked = settings.emailNotifications !== false;
         document.getElementById('spendingAlerts').checked = settings.spendingAlerts !== false;
         
-        // Aplica a cor de destaque
         document.querySelectorAll('.color-option').forEach(option => {
             option.classList.remove('active');
             if (option.dataset.color === (settings.accentColor || 'blue')) {
                 option.classList.add('active');
             }
         });
-    }
-
-    function toggleSidebar() {
-        document.querySelector('.sidebar').classList.toggle('collapsed');
+        
+        applyTheme(settings.theme, settings.accentColor);
     }
 
     function adicionarGasto(nome, valor) {
@@ -315,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (doc.exists) {
                 const data = doc.data();
                 
-                // Preenche os campos com os dados carregados
                 if (data.salario) document.getElementById('salario').value = data.salario;
                 if (data.outrasRendas) document.getElementById('outrasRendas').value = data.outrasRendas;
                 if (data.valorPassagem) document.getElementById('valorPassagem').value = data.valorPassagem;
@@ -323,29 +344,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.valeTransporte) document.getElementById('valeTransporte').value = data.valeTransporte;
                 if (data.diasUsadosVT) document.getElementById('diasUsadosVT').value = data.diasUsadosVT;
                 
-                // Limpa a lista de gastos existente
                 listaGastos.innerHTML = '';
                 
-                // Adiciona os gastos salvos
                 if (data.gastos && data.gastos.length > 0) {
                     data.gastos.forEach(gasto => {
                         adicionarGasto(gasto.nome, gasto.valor);
                     });
-                } else {
-                    // Adiciona gastos padrão se não houver dados salvos
-                    adicionarGasto('Moradia', 521.66);
-                    adicionarGasto('Alimentação', 130);
-                    adicionarGasto('Transporte', 50);
                 }
                 
                 return data;
-            } else {
-                // Se não houver dados, adiciona os valores padrão
-                adicionarGasto('Moradia', 521.66);
-                adicionarGasto('Alimentação', 130);
-                adicionarGasto('Transporte', 50);
-                return null;
             }
+            return null;
         } catch (error) {
             console.error('Erro ao carregar dados financeiros:', error);
             return null;
@@ -353,6 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function calcularResumo() {
+        console.log('Calculando resumo financeiro...');
         const mes = parseInt(mesSelect.value);
         const ano = parseInt(anoInput.value);
         const salario = parseFloat(document.getElementById('salario').value) || 0;
@@ -362,7 +372,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const diasUsadosVT = parseInt(document.getElementById('diasUsadosVT').value) || 0;
         const vtRecebido = parseFloat(document.getElementById('valeTransporte').value) || 0;
 
-        // Cálculos
         const vtUtilizado = valorPassagem * viagensDia * diasUsadosVT;
         const vtEconomizado = vtRecebido - vtUtilizado;
         
@@ -375,7 +384,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const rendaTotal = salario + outrasRendas;
         const saldo = rendaTotal - totalGastos + vtEconomizado;
 
-        // Exibe resultados
         const mesNome = mesSelect.options[mesSelect.selectedIndex].text;
         const resumoHTML = `
             <h3>${mesNome} ${ano}</h3>
@@ -501,15 +509,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSavedTabs();
     }
 
-    // Inicializa a aplicação
-    if (auth.currentUser) {
-        loginModal.style.display = 'none';
-        appContainer.style.display = 'flex';
-        updateUserUI(auth.currentUser);
-        loadUserData(auth.currentUser.uid);
-        loadFinancialData(auth.currentUser.uid);
-    } else {
-        loginModal.style.display = 'flex';
-        appContainer.style.display = 'none';
-    }
+    // Inicialização
+    console.log('Aplicação inicializada');
+    atualizarDiasUteis();
+    calcularVTemTempoReal();
 });
