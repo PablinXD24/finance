@@ -1,0 +1,233 @@
+:root {
+    --bg-color: #1a1a2e;
+    --card-color: #16213e;
+    --text-color: #e6e6e6;
+    --primary-color: #0f3460;
+    --secondary-color: #1a5f7a;
+    --success-color: #00b894;
+    --danger-color: #ff7675;
+    --border-color: #2d4059;
+    --highlight-color: #4cc9f0;
+    --warning-color: #fdcb6e;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: var(--card-color);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin-bottom: 15px;
+}
+
+.periodo {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.periodo select, .periodo input {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+main {
+    padding: 20px;
+}
+
+section {
+    margin-bottom: 25px;
+}
+
+h2 {
+    color: var(--highlight-color);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.3em;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    transition: border 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--highlight-color);
+}
+
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: var(--secondary-color);
+}
+
+#addGasto {
+    background: var(--success-color);
+    font-size: 12px;
+    padding: 5px 10px;
+}
+
+#addGasto:hover {
+    background: #00a884;
+}
+
+.gasto-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.gasto-item input[type="text"] {
+    flex: 2;
+}
+
+.gasto-item input[type="number"] {
+    flex: 1;
+}
+
+.gasto-item button {
+    background: var(--danger-color);
+    padding: 8px;
+    width: auto;
+}
+
+.vt-calculado {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+    border-left: 3px solid var(--highlight-color);
+}
+
+.vt-calculado p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.vt-calculado span {
+    font-weight: bold;
+}
+
+.resultado {
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--border-color);
+    display: none;
+}
+
+.saldo-final {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid var(--border-color);
+}
+
+#resumoMensal {
+    margin-top: 15px;
+}
+
+#resumoMensal h3 {
+    color: var(--highlight-color);
+    margin-bottom: 10px;
+}
+
+#resumoMensal p {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#resumoMensal strong {
+    color: var(--text-color);
+}
+
+.lista-gastos {
+    margin: 10px 0 15px 20px;
+}
+
+.lista-gastos li {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+small {
+    color: #aaa;
+    font-size: 0.85em;
+}
+
+/* Cores para valores */
+.positive {
+    color: var(--success-color);
+}
+
+.negative {
+    color: var(--danger-color);
+}
+
+.neutral {
+    color: var(--warning-color);
+}
