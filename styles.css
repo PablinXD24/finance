@@ -185,6 +185,7 @@ nav ul {
 nav ul li {
     padding: 15px 20px;
     transition: background-color 0.3s;
+    cursor: pointer;
 }
 
 nav ul li:hover {
@@ -234,8 +235,21 @@ nav ul li i {
 
 .btn-logout {
     background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
     width: 100%;
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-logout:hover {
+    background-color: #e66767;
 }
 
 .sidebar-toggle {
@@ -253,6 +267,7 @@ nav ul li i {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
     transition: margin-left 0.3s;
+    padding: 20px;
 }
 
 .sidebar.collapsed + .main-content {
@@ -262,8 +277,7 @@ nav ul li i {
 
 .page {
     display: none;
-    padding: 20px;
-    min-height: 100vh;
+    min-height: calc(100vh - 40px);
 }
 
 .page.active {
@@ -285,7 +299,6 @@ nav ul li i {
     align-items: center;
     gap: 10px;
     margin-bottom: 20px;
-    font-size: 1.2em;
 }
 
 .tab-title i {
@@ -297,6 +310,10 @@ nav ul li i {
     font-size: 0.9em;
     padding: 5px 10px;
     background-color: var(--success-color);
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 .tab-title button:hover {
@@ -351,6 +368,12 @@ input, select {
     font-size: 16px;
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--highlight-color);
 }
 
 input:disabled {
@@ -369,6 +392,7 @@ button {
     transition: background 0.3s;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
 }
 
@@ -409,6 +433,11 @@ button:disabled {
 .gasto-item button {
     background: var(--danger-color);
     padding: 10px;
+    width: auto;
+}
+
+.gasto-item button:hover {
+    background: #e66767;
 }
 
 .vt-calculado {
@@ -617,10 +646,16 @@ input:checked + .slider:before {
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
+    transition: transform 0.2s;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
 }
 
 .color-option.active {
     border-color: white;
+    transform: scale(1.1);
 }
 
 .color-option.blue { background-color: #4cc9f0; }
@@ -637,6 +672,10 @@ input:checked + .slider:before {
 
 .btn-save {
     background-color: var(--success-color);
+}
+
+.btn-save:hover {
+    background-color: #00a884;
 }
 
 /* Responsividade */
