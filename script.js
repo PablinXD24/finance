@@ -1,11 +1,11 @@
 // Configuração do Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
-    authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
-    projectId: "meu-app-financeiro-4f6f4",
-    storageBucket: "meu-app-financeiro-4f6f4.appspot.com",
-    messagingSenderId: "185525679690",
-    appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
+  apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
+  authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
+  projectId: "meu-app-financeiro-4f6f4",
+  storageBucket: "meu-app-financeiro-4f6f4.appspot.com",
+  messagingSenderId: "185525679690",
+  appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
 };
 
 // Inicializa o Firebase
@@ -17,8 +17,6 @@ const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM completamente carregado');
-    
     // Elementos da interface
     const loginModal = document.getElementById('loginModal');
     const googleLoginBtn = document.getElementById('googleLoginBtn');
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsUserPhoto = document.getElementById('settings-user-photo');
     const userEmail = document.getElementById('user-email');
     const userNameInput = document.getElementById('user-name');
-    const menuItems = document.querySelectorAll('.menu-item');
     
     // Elementos financeiros
     const mesSelect = document.getElementById('mesSelecionado');
@@ -43,24 +40,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Elementos de configuração
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const themeSelector = document.getElementById('theme-selector');
+    const colorOptions = document.querySelectorAll('.color-option');
     
-    let savedCalculations = [];
-    try {
-        savedCalculations = JSON.parse(localStorage.getItem('savedCalculations')) || [];
-    } catch (e) {
-        console.error('Erro ao ler localStorage:', e);
-        savedCalculations = [];
-    }
+    let savedCalculations = JSON.parse(localStorage.getItem('savedCalculations')) || [];
 
     // Configura data atual
     const hoje = new Date();
     mesSelect.value = hoje.getMonth();
     anoInput.value = hoje.getFullYear();
-
-    // Adiciona gastos padrão inicialmente
-    adicionarGasto('Moradia', 521.66);
-    adicionarGasto('Alimentação', 130);
-    adicionarGasto('Transporte', 50);
 
     // Event listeners
     addGastoBtn.addEventListener('click', () => adicionarGasto('', 0));
@@ -71,39 +59,46 @@ document.addEventListener('DOMContentLoaded', function() {
     saveSettingsBtn.addEventListener('click', saveSettings);
     googleLoginBtn.addEventListener('click', signInWithGoogle);
 
-    // Navegação entre páginas
-    menuItems.forEach(item => {
+    // Configura navegação entre páginas
+    document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
             const pageId = this.getAttribute('data-page');
-            showPage(pageId);
             
-            // Atualiza menu ativo
-            document.querySelectorAll('nav ul li').forEach(li => {
-                li.classList.remove('active');
+            // Esconde todas as páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
             });
-            this.parentElement.classList.add('active');
+            
+            // Mostra a página selecionada
+            document.getElementById(pageId).classList.add('active');
         });
     });
 
-    // Mostra uma página específica
-    function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(page => {
-            page.classList.remove('active');
+    // Configura o toggle da sidebar
+    document.querySelector('.sidebar-toggle').addEventListener('click', toggleSidebar);
+
+    // Configura listeners para cálculo em tempo real do VT
+    document.getElementById('valorPassagem').addEventListener('input', calcularVTemTempoReal);
+    document.getElementById('viagensDia').addEventListener('input', calcularVTemTempoReal);
+    document.getElementById('diasUsadosVT').addEventListener('input', calcularVTemTempoReal);
+    document.getElementById('valeTransporte').addEventListener('input', calcularVTemTempoReal);
+
+    // Configura seleção de cores
+    colorOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            colorOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
         });
-        document.getElementById(pageId).classList.add('active');
-    }
+    });
 
     // Função para login com Google
     function signInWithGoogle() {
-        console.log('Iniciando login com Google...');
         auth.signInWithPopup(provider)
             .then(async (result) => {
-                console.log('Login bem-sucedido:', result.user);
                 const user = result.user;
                 
                 if (result.additionalUserInfo.isNewUser) {
-                    console.log('Novo usuário, criando registro...');
                     await db.collection('users').doc(user.uid).set({
                         name: user.displayName,
                         email: user.email,
@@ -124,51 +119,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 await loadFinancialData(user.uid);
             })
             .catch((error) => {
-                console.error('Erro no login:', error);
                 showMessage(loginMessage, getFirebaseErrorMessage(error), 'error');
             });
     }
 
     // Função para logout
     function signOut() {
-        console.log('Realizando logout...');
-        auth.signOut()
-            .then(() => {
-                console.log('Logout bem-sucedido');
-                loginModal.style.display = 'flex';
-                appContainer.style.display = 'none';
-            })
+        calcularResumo()
+            .then(() => auth.signOut())
             .catch(error => {
-                console.error('Erro no logout:', error);
+                console.error('Erro ao salvar dados antes de sair:', error);
+                auth.signOut();
             });
     }
 
     // Função para atualizar a UI com os dados do usuário
     function updateUserUI(user) {
-        console.log('Atualizando UI com dados do usuário:', user);
         if (user.photoURL) {
             userPhoto.src = user.photoURL;
             settingsUserPhoto.src = user.photoURL;
+        } else {
+            const defaultPhoto = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+            userPhoto.src = defaultPhoto;
+            settingsUserPhoto.src = defaultPhoto;
         }
         
-        if (user.displayName) {
-            userName.textContent = user.displayName;
-            userNameInput.value = user.displayName;
-        }
-        
-        if (user.email) {
-            userEmail.value = user.email;
-        }
+        userName.textContent = user.displayName || 'Usuário';
+        userNameInput.value = user.displayName || '';
+        userEmail.value = user.email || '';
     }
 
     // Função para salvar configurações
     async function saveSettings() {
-        console.log('Salvando configurações...');
         const user = auth.currentUser;
         if (!user) return;
 
         const settings = {
-            theme: document.getElementById('theme-selector').value,
+            theme: themeSelector.value,
             accentColor: document.querySelector('.color-option.active').dataset.color,
             emailNotifications: document.getElementById('emailNotifications').checked,
             spendingAlerts: document.getElementById('spendingAlerts').checked
@@ -181,16 +168,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             applyTheme(settings.theme, settings.accentColor);
             showMessage(loginMessage, 'Configurações salvas com sucesso!', 'success');
-            console.log('Configurações salvas com sucesso');
         } catch (error) {
-            console.error('Erro ao salvar configurações:', error);
             showMessage(loginMessage, 'Erro ao salvar configurações: ' + error.message, 'error');
         }
     }
 
     // Observador de estado de autenticação
     auth.onAuthStateChanged(async (user) => {
-        console.log('Estado de autenticação alterado:', user);
         if (user) {
             loginModal.style.display = 'none';
             appContainer.style.display = 'flex';
@@ -211,51 +195,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Funções auxiliares
-    function showMessage(element, message, type) {
-        element.textContent = message;
-        element.className = `message ${type}`;
-        setTimeout(() => {
-            element.textContent = '';
-            element.className = 'message';
-        }, 5000);
+    // Função para alternar a sidebar
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('collapsed');
     }
 
-    function getFirebaseErrorMessage(error) {
-        switch (error.code) {
-            case 'auth/popup-closed-by-user':
-                return 'O popup de login foi fechado antes de concluir';
-            case 'auth/cancelled-popup-request':
-                return 'Outra solicitação de popup já está em andamento';
-            case 'auth/popup-blocked':
-                return 'O popup de login foi bloqueado pelo navegador';
-            default:
-                return 'Erro ao fazer login: ' + error.message;
-        }
-    }
-
-    function applyTheme(theme, accentColor) {
-        console.log(`Aplicando tema: ${theme}, cor: ${accentColor}`);
-        // Implementação real da mudança de tema
-    }
-
-    function applySettings(settings) {
-        if (!settings) return;
-        
-        document.getElementById('theme-selector').value = settings.theme || 'dark';
-        document.getElementById('emailNotifications').checked = settings.emailNotifications !== false;
-        document.getElementById('spendingAlerts').checked = settings.spendingAlerts !== false;
-        
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.classList.remove('active');
-            if (option.dataset.color === (settings.accentColor || 'blue')) {
-                option.classList.add('active');
-            }
-        });
-        
-        applyTheme(settings.theme, settings.accentColor);
-    }
-
+    // Função para adicionar gasto
     function adicionarGasto(nome, valor) {
         const gastoDiv = document.createElement('div');
         gastoDiv.className = 'gasto-item';
@@ -275,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Função para calcular dias úteis
     function calcularDiasUteis(mes, ano) {
         const primeiroDia = new Date(ano, mes, 1).getDay();
         let diasNoMes = new Date(ano, mes + 1, 0).getDate();
@@ -287,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return diasUteis;
     }
 
+    // Função para atualizar dias úteis
     function atualizarDiasUteis() {
         const mes = parseInt(mesSelect.value);
         const ano = parseInt(anoInput.value);
@@ -301,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
         calcularVTemTempoReal();
     }
 
+    // Função para calcular VT em tempo real
     function calcularVTemTempoReal() {
         const valorPassagem = parseFloat(document.getElementById('valorPassagem').value) || 0;
         const viagensDia = parseInt(document.getElementById('viagensDia').value) || 0;
@@ -318,19 +266,18 @@ document.addEventListener('DOMContentLoaded', function() {
         saldoElement.className = vtSaldo > 0 ? 'positive' : vtSaldo < 0 ? 'negative' : 'neutral';
     }
 
+    // Função para carregar dados do usuário
     async function loadUserData(userId) {
         try {
             const doc = await db.collection('users').doc(userId).get();
-            if (doc.exists) {
-                return doc.data();
-            }
-            return null;
+            return doc.exists ? doc.data() : null;
         } catch (error) {
             console.error('Erro ao carregar dados do usuário:', error);
             return null;
         }
     }
 
+    // Função para carregar dados financeiros
     async function loadFinancialData(userId) {
         try {
             const doc = await db.collection('financialData').doc(userId).get();
@@ -350,19 +297,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.gastos.forEach(gasto => {
                         adicionarGasto(gasto.nome, gasto.valor);
                     });
+                } else {
+                    adicionarGasto('Moradia', 521.66);
+                    adicionarGasto('Alimentação', 130);
+                    adicionarGasto('Transporte', 50);
                 }
                 
                 return data;
+            } else {
+                adicionarGasto('Moradia', 521.66);
+                adicionarGasto('Alimentação', 130);
+                adicionarGasto('Transporte', 50);
+                return null;
             }
-            return null;
         } catch (error) {
             console.error('Erro ao carregar dados financeiros:', error);
             return null;
         }
     }
 
+    // Função para calcular resumo financeiro
     async function calcularResumo() {
-        console.log('Calculando resumo financeiro...');
         const mes = parseInt(mesSelect.value);
         const ano = parseInt(anoInput.value);
         const salario = parseFloat(document.getElementById('salario').value) || 0;
@@ -451,6 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Função para atualizar abas salvas
     function updateSavedTabs() {
         tabsContainer.innerHTML = '';
         tabsContent.innerHTML = '';
@@ -503,14 +459,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Função para remover aba
     function removeTab(id) {
         savedCalculations = savedCalculations.filter(calc => calc.id !== id);
         localStorage.setItem('savedCalculations', JSON.stringify(savedCalculations));
         updateSavedTabs();
     }
 
-    // Inicialização
-    console.log('Aplicação inicializada');
+    // Função para aplicar tema
+    function applyTheme(theme, accentColor) {
+        console.log('Tema aplicado:', theme, 'Cor de destaque:', accentColor);
+        // Implementação real dependeria da sua lógica de temas
+    }
+
+    // Função para aplicar configurações
+    function applySettings(settings) {
+        if (!settings) return;
+        
+        themeSelector.value = settings.theme || 'dark';
+        
+        document.getElementById('emailNotifications').checked = settings.emailNotifications !== false;
+        document.getElementById('spendingAlerts').checked = settings.spendingAlerts !== false;
+        
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('active');
+            if (option.dataset.color === (settings.accentColor || 'blue')) {
+                option.classList.add('active');
+            }
+        });
+    }
+
+    // Função para mostrar mensagens
+    function showMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `message ${type}`;
+        setTimeout(() => {
+            element.textContent = '';
+            element.className = 'message';
+        }, 5000);
+    }
+
+    // Função para obter mensagem de erro do Firebase
+    function getFirebaseErrorMessage(error) {
+        switch (error.code) {
+            case 'auth/popup-closed-by-user':
+                return 'O popup de login foi fechado antes de concluir';
+            case 'auth/cancelled-popup-request':
+                return 'Outra solicitação de popup já está em andamento';
+            case 'auth/popup-blocked':
+                return 'O popup de login foi bloqueado pelo navegador';
+            default:
+                return 'Erro ao fazer login: ' + error.message;
+        }
+    }
+
+    // Inicializa a aplicação
+    if (auth.currentUser) {
+        loginModal.style.display = 'none';
+        appContainer.style.display = 'flex';
+        updateUserUI(auth.currentUser);
+        loadUserData(auth.currentUser.uid);
+        loadFinancialData(auth.currentUser.uid);
+    } else {
+        loginModal.style.display = 'flex';
+        appContainer.style.display = 'none';
+    }
+
+    // Inicializa cálculos
     atualizarDiasUteis();
-    calcularVTemTempoReal();
 });
