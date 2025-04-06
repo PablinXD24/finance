@@ -284,6 +284,34 @@ nav ul li i {
     margin: 0 auto;
 }
 
+/* Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard-card {
+    background-color: var(--card-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-card h3 {
+    margin-bottom: 15px;
+    color: var(--highlight-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+canvas {
+    max-height: 300px;
+    width: 100% !important;
+}
+
 /* Estilo para os títulos das abas */
 .tab-title {
     background-color: var(--primary-color);
@@ -416,6 +444,28 @@ button:disabled {
     align-items: center;
 }
 
+.gasto-categoria {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    color: white;
+    min-width: 120px;
+}
+
+.gasto-categoria select {
+    background: transparent;
+    border: none;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.gasto-categoria select option {
+    color: #333;
+}
+
 .gasto-item input[type="text"] {
     flex: 2;
 }
@@ -460,6 +510,26 @@ button:disabled {
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     margin-top: 20px;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.export-buttons button {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+}
+
+#exportPDF {
+    background-color: #ff7675;
+}
+
+#exportExcel {
+    background-color: #00b894;
 }
 
 .saldo-final {
@@ -717,5 +787,13 @@ input:checked + .slider:before {
     .tab-title {
         font-size: 1em;
         padding: 8px 12px;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
     }
 }
