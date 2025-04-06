@@ -185,7 +185,6 @@ nav ul {
 nav ul li {
     padding: 15px 20px;
     transition: background-color 0.3s;
-    cursor: pointer;
 }
 
 nav ul li:hover {
@@ -248,10 +247,6 @@ nav ul li i {
     gap: 8px;
 }
 
-.btn-logout:hover {
-    background-color: #e66767;
-}
-
 .sidebar-toggle {
     padding: 15px 20px;
     cursor: pointer;
@@ -267,7 +262,6 @@ nav ul li i {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
     transition: margin-left 0.3s;
-    padding: 20px;
 }
 
 .sidebar.collapsed + .main-content {
@@ -277,7 +271,8 @@ nav ul li i {
 
 .page {
     display: none;
-    min-height: calc(100vh - 40px);
+    padding: 20px;
+    min-height: 100vh;
 }
 
 .page.active {
@@ -299,6 +294,7 @@ nav ul li i {
     align-items: center;
     gap: 10px;
     margin-bottom: 20px;
+    font-size: 1.2em;
 }
 
 .tab-title i {
@@ -311,8 +307,8 @@ nav ul li i {
     padding: 5px 10px;
     background-color: var(--success-color);
     border: none;
-    color: white;
     border-radius: 4px;
+    color: white;
     cursor: pointer;
 }
 
@@ -368,7 +364,6 @@ input, select {
     font-size: 16px;
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
-    transition: border-color 0.3s;
 }
 
 input:focus, select:focus {
@@ -392,7 +387,6 @@ button {
     transition: background 0.3s;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
 }
 
@@ -433,11 +427,7 @@ button:disabled {
 .gasto-item button {
     background: var(--danger-color);
     padding: 10px;
-    width: auto;
-}
-
-.gasto-item button:hover {
-    background: #e66767;
+    min-width: 40px;
 }
 
 .vt-calculado {
@@ -672,10 +662,6 @@ input:checked + .slider:before {
 
 .btn-save {
     background-color: var(--success-color);
-}
-
-.btn-save:hover {
-    background-color: #00a884;
 }
 
 /* Responsividade */
