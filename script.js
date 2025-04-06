@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const calcularBtn = document.getElementById('calcularBtn');
     const tabsContainer = document.getElementById('tabsContainer');
     const tabsContent = document.getElementById('tabsContent');
+    const exportPDFBtn = document.getElementById('exportPDF');
+    const exportExcelBtn = document.getElementById('exportExcel');
     
     // Elementos de configuração
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
@@ -51,13 +53,15 @@ document.addEventListener('DOMContentLoaded', function() {
     anoInput.value = hoje.getFullYear();
 
     // Event listeners
-    addGastoBtn.addEventListener('click', () => adicionarGasto('', 0));
+    addGastoBtn.addEventListener('click', () => adicionarGasto());
     calcularBtn.addEventListener('click', calcularResumo);
     mesSelect.addEventListener('change', atualizarDiasUteis);
     anoInput.addEventListener('change', atualizarDiasUteis);
     logoutBtn.addEventListener('click', signOut);
     saveSettingsBtn.addEventListener('click', saveSettings);
     googleLoginBtn.addEventListener('click', signInWithGoogle);
+    exportPDFBtn.addEventListener('click', exportToPDF);
+    exportExcelBtn.addEventListener('click', exportToExcel);
 
     // Configura navegação entre páginas
     document.querySelectorAll('.menu-item').forEach(item => {
@@ -65,13 +69,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const pageId = this.getAttribute('data-page');
             
-            // Esconde todas as páginas
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
             
-            // Mostra a página selecionada
             document.getElementById(pageId).classList.add('active');
+            
+            if (pageId === 'dashboard') {
+                updateDashboard();
+            }
         });
     });
 
@@ -117,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 appContainer.style.display = 'flex';
                 updateUserUI(user);
                 await loadFinancialData(user.uid);
+                updateDashboard();
             })
             .catch((error) => {
                 showMessage(loginMessage, getFirebaseErrorMessage(error), 'error');
@@ -189,6 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
             atualizarDiasUteis();
             calcularVTemTempoReal();
             updateSavedTabs();
+            updateDashboard();
         } else {
             loginModal.style.display = 'flex';
             appContainer.style.display = 'none';
@@ -201,15 +209,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Função para adicionar gasto
-    function adicionarGasto(nome, valor) {
+    function adicionarGasto(nome = '', valor = 0, categoria = 'outros') {
+        const categorias = {
+            moradia: { nome: 'Moradia', icone: 'fa-home', cor: '#6c5ce7' },
+            alimentacao: { nome: 'Alimentação', icone: 'fa-utensils', cor: '#00b894' },
+            transporte: { nome: 'Transporte', icone: 'fa-bus', cor: '#0984e3' },
+            lazer: { nome: 'Lazer', icone: 'fa-gamepad', cor: '#fdcb6e' },
+            saude: { nome: 'Saúde', icone: 'fa-heartbeat', cor: '#ff7675' },
+            educacao: { nome: 'Educação', icone: 'fa-book', cor: '#a29bfe' },
+            outros: { nome: 'Outros', icone: 'fa-list', cor: '#636e72' }
+        };
+
         const gastoDiv = document.createElement('div');
         gastoDiv.className = 'gasto-item';
+        
         gastoDiv.innerHTML = `
-            <input type="text" placeholder="Categoria" value="${nome}">
+            <div class="gasto-categoria" style="background-color: ${categorias[categoria].cor}">
+                <i class="fas ${categorias[categoria].icone}"></i>
+                <select class="categoria-select">
+                    ${Object.entries(categorias).map(([key, cat]) => 
+                        `<option value="${key}" ${key === categoria ? 'selected' : ''}>${cat.nome}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <input type="text" placeholder="Descrição" value="${nome || categorias[categoria].nome}">
             <input type="number" step="0.01" placeholder="Valor" value="${valor}">
             <button type="button" class="removerGasto">×</button>
         `;
+        
         listaGastos.appendChild(gastoDiv);
+        
+        // Atualizar a cor quando a categoria muda
+        gastoDiv.querySelector('.categoria-select').addEventListener('change', function() {
+            const selectedCat = this.value;
+            const catDiv = this.closest('.gasto-categoria');
+            catDiv.style.backgroundColor = categorias[selectedCat].cor;
+            catDiv.querySelector('i').className = `fas ${categorias[selectedCat].icone}`;
+        });
         
         gastoDiv.querySelector('.removerGasto').addEventListener('click', function() {
             if (listaGastos.children.length > 1) {
@@ -266,6 +302,115 @@ document.addEventListener('DOMContentLoaded', function() {
         saldoElement.className = vtSaldo > 0 ? 'positive' : vtSaldo < 0 ? 'negative' : 'neutral';
     }
 
+    // Função para atualizar a dashboard
+    async function updateDashboard() {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        // Obter dados financeiros
+        const financialData = await loadFinancialData(user.uid);
+        if (!financialData) return;
+
+        // Criar gráfico de pizza de gastos
+        const gastosCtx = document.getElementById('gastosChart').getContext('2d');
+        if (window.gastosChart) window.gastosChart.destroy();
+        
+        window.gastosChart = new Chart(gastosCtx, {
+            type: 'pie',
+            data: {
+                labels: financialData.gastos.map(g => g.nome),
+                datasets: [{
+                    data: financialData.gastos.map(g => g.valor),
+                    backgroundColor: [
+                        '#4cc9f0', '#00b894', '#6c5ce7', '#fdcb6e', 
+                        '#ff7675', '#a29bfe', '#55efc4', '#ffeaa7'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#e6e6e6'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribuição de Gastos',
+                        color: '#e6e6e6'
+                    }
+                }
+            }
+        });
+
+        // Gráfico de linha para histórico
+        const historicoCtx = document.getElementById('historicoChart').getContext('2d');
+        if (window.historicoChart) window.historicoChart.destroy();
+        
+        window.historicoChart = new Chart(historicoCtx, {
+            type: 'line',
+            data: {
+                labels: savedCalculations.map(c => `${c.mes}/${c.ano}`).reverse(),
+                datasets: [{
+                    label: 'Saldo Mensal',
+                    data: savedCalculations.map(c => c.saldo).reverse(),
+                    borderColor: '#4cc9f0',
+                    backgroundColor: 'rgba(76, 201, 240, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e6e6e6'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Histórico de Saldos',
+                        color: '#e6e6e6'
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: '#e6e6e6',
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2);
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#e6e6e6'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Atualizar resumo na dashboard
+        const saldoAtual = document.getElementById('saldoDisponivel').textContent;
+        const resumoHTML = `
+            <p><strong>Saldo Atual:</strong> <span class="${saldoAtual.includes('-') ? 'negative' : 'positive'}">${saldoAtual}</span></p>
+            <p><strong>Total de Gastos:</strong> ${financialData.gastos.length} categorias</p>
+            <p><strong>Última Atualização:</strong> ${new Date().toLocaleDateString()}</p>
+        `;
+        document.getElementById('dashboardResumo').innerHTML = resumoHTML;
+    }
+
     // Função para carregar dados do usuário
     async function loadUserData(userId) {
         try {
@@ -295,19 +440,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (data.gastos && data.gastos.length > 0) {
                     data.gastos.forEach(gasto => {
-                        adicionarGasto(gasto.nome, gasto.valor);
+                        adicionarGasto(gasto.nome, gasto.valor, gasto.categoria || 'outros');
                     });
                 } else {
-                    adicionarGasto('Moradia', 521.66);
-                    adicionarGasto('Alimentação', 130);
-                    adicionarGasto('Transporte', 50);
+                    // Gastos padrão com categorias
+                    adicionarGasto('Aluguel', 521.66, 'moradia');
+                    adicionarGasto('Supermercado', 130, 'alimentacao');
+                    adicionarGasto('Combustível', 50, 'transporte');
                 }
                 
                 return data;
             } else {
-                adicionarGasto('Moradia', 521.66);
-                adicionarGasto('Alimentação', 130);
-                adicionarGasto('Transporte', 50);
+                // Se não houver dados, adiciona os valores padrão
+                adicionarGasto('Aluguel', 521.66, 'moradia');
+                adicionarGasto('Supermercado', 130, 'alimentacao');
+                adicionarGasto('Combustível', 50, 'transporte');
                 return null;
             }
         } catch (error) {
@@ -332,7 +479,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const gastosItens = Array.from(listaGastos.children).map(item => ({
             nome: item.querySelector('input[type="text"]').value || 'Gasto não nomeado',
-            valor: parseFloat(item.querySelector('input[type="number"]').value) || 0
+            valor: parseFloat(item.querySelector('input[type="number"]').value) || 0,
+            categoria: item.querySelector('.categoria-select').value
         }));
         
         const totalGastos = gastosItens.reduce((total, gasto) => total + gasto.valor, 0);
@@ -382,6 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
         savedCalculations.push(calculationData);
         localStorage.setItem('savedCalculations', JSON.stringify(savedCalculations));
         updateSavedTabs();
+        updateDashboard();
 
         // Salva os dados financeiros no Firebase
         const user = auth.currentUser;
@@ -404,6 +553,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Erro ao salvar dados financeiros:', error);
             }
         }
+    }
+
+    // Função para exportar como PDF
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const mes = mesSelect.options[mesSelect.selectedIndex].text;
+        const ano = anoInput.value;
+        
+        // Título
+        doc.setFontSize(18);
+        doc.text(`Relatório Financeiro - ${mes}/${ano}`, 105, 15, { align: 'center' });
+        
+        // Dados
+        doc.setFontSize(12);
+        let y = 30;
+        
+        // Renda
+        doc.text('Renda:', 14, y);
+        doc.text(`Salário: R$ ${document.getElementById('salario').value}`, 30, y + 7);
+        doc.text(`Outras Rendas: R$ ${document.getElementById('outrasRendas').value}`, 30, y + 14);
+        y += 25;
+        
+        // Gastos
+        doc.text('Gastos Fixos:', 14, y);
+        const gastos = Array.from(listaGastos.children).map(item => ({
+            nome: item.querySelector('input[type="text"]').value,
+            valor: item.querySelector('input[type="number"]').value,
+            categoria: item.querySelector('.categoria-select').value
+        }));
+        
+        gastos.forEach((gasto, i) => {
+            doc.text(`${gasto.nome}: R$ ${gasto.valor}`, 30, y + 7 + (i * 7));
+        });
+        y += 10 + (gastos.length * 7);
+        
+        // VT
+        doc.text('Vale Transporte:', 14, y);
+        doc.text(`Valor Passagem: R$ ${document.getElementById('valorPassagem').value}`, 30, y + 7);
+        doc.text(`Viagens/Dia: ${document.getElementById('viagensDia').value}`, 30, y + 14);
+        doc.text(`Dias Utilizados: ${document.getElementById('diasUsadosVT').value}`, 30, y + 21);
+        doc.text(`VT Recebido: R$ ${document.getElementById('valeTransporte').value}`, 30, y + 28);
+        y += 35;
+        
+        // Saldo
+        const saldo = document.getElementById('saldoDisponivel').textContent;
+        doc.setFontSize(14);
+        doc.text(`Saldo Disponível: ${saldo}`, 105, y, { align: 'center' });
+        
+        doc.save(`relatorio_financeiro_${mes}_${ano}.pdf`);
+    }
+
+    // Função para exportar como Excel
+    function exportToExcel() {
+        const mes = mesSelect.options[mesSelect.selectedIndex].text;
+        const ano = anoInput.value;
+        
+        // Preparar dados
+        const data = [
+            ['Categoria', 'Valor (R$)'],
+            ['Salário', document.getElementById('salario').value],
+            ['Outras Rendas', document.getElementById('outrasRendas').value],
+            ['', ''],
+            ['Gastos Fixos', '']
+        ];
+        
+        // Adicionar gastos
+        Array.from(listaGastos.children).forEach(item => {
+            data.push([
+                item.querySelector('input[type="text"]').value,
+                item.querySelector('input[type="number"]').value
+            ]);
+        });
+        
+        data.push(['', '']);
+        data.push(['Vale Transporte', '']);
+        data.push(['Valor Passagem', document.getElementById('valorPassagem').value]);
+        data.push(['Viagens por Dia', document.getElementById('viagensDia').value]);
+        data.push(['Dias Utilizados', document.getElementById('diasUsadosVT').value]);
+        data.push(['VT Recebido', document.getElementById('valeTransporte').value]);
+        data.push(['', '']);
+        data.push(['Saldo Disponível', document.getElementById('saldoDisponivel').textContent.replace('R$ ', '')]);
+        
+        // Criar planilha
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+        
+        // Exportar
+        XLSX.writeFile(wb, `relatorio_financeiro_${mes}_${ano}.xlsx`);
     }
 
     // Função para atualizar abas salvas
@@ -464,6 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
         savedCalculations = savedCalculations.filter(calc => calc.id !== id);
         localStorage.setItem('savedCalculations', JSON.stringify(savedCalculations));
         updateSavedTabs();
+        updateDashboard();
     }
 
     // Função para aplicar tema
