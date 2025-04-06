@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Pessoal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Controle Financeiro Pessoal</h1>
+            <div class="periodo">
+                <select id="mesSelecionado">
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+                <input type="number" id="anoSelecionado" min="2000" max="2100">
+            </div>
+        </header>
+
+        <main>
+            <section class="entradas">
+                <h2>Renda</h2>
+                <div class="form-group">
+                    <label>Salário (R$)</label>
+                    <input type="number" step="0.01" id="salario" value="900">
+                </div>
+                <div class="form-group">
+                    <label>Outras Rendas (R$)</label>
+                    <input type="number" step="0.01" id="outrasRendas" value="0">
+                </div>
+            </section>
+
+            <section class="gastos">
+                <h2>Gastos Fixos <button type="button" id="addGasto">+ Adicionar</button></h2>
+                <div id="listaGastos">
+                    <!-- Gastos serão adicionados dinamicamente -->
+                </div>
+            </section>
+
+            <section class="vale-transporte">
+                <h2>Vale Transporte</h2>
+                <div class="form-group">
+                    <label>Valor da Passagem (R$)</label>
+                    <input type="number" step="0.01" id="valorPassagem" value="4.50">
+                </div>
+                <div class="form-group">
+                    <label>Viagens por Dia</label>
+                    <input type="number" id="viagensDia" min="1" value="2">
+                </div>
+                <div class="form-group">
+                    <label>Dias Utilizados</label>
+                    <input type="number" id="diasUsadosVT" min="1">
+                    <small>Dias úteis: <span id="totalDiasUteis">22</span></small>
+                </div>
+                <div class="form-group">
+                    <label>VT Recebido (R$)</label>
+                    <input type="number" step="0.01" id="valeTransporte" value="201.40">
+                </div>
+                <div class="vt-calculado">
+                    <p>Total VT utilizado: <span id="vtUtilizadoDisplay">R$ 0,00</span></p>
+                    <p>Total VT recebido: <span id="vtRecebidoDisplay">R$ 0,00</span></p>
+                    <p>Saldo VT: <span id="vtSaldoDisplay">R$ 0,00</span></p>
+                </div>
+            </section>
+
+            <button type="button" id="calcularBtn">Calcular Resumo Mensal</button>
+        </main>
+
+        <section class="resultado" id="resultado">
+            <h2>Resumo Financeiro</h2>
+            <div id="resumoMensal"></div>
+            <div class="saldo-final">
+                <span>Saldo Disponível:</span>
+                <span id="saldoDisponivel">R$ 0,00</span>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
