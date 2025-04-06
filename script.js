@@ -1,12 +1,12 @@
 // Configuração do Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
-    authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
-    projectId: "meu-app-financeiro-4f6f4",
-    storageBucket: "meu-app-financeiro-4f6f4.firebasestorage.app",
-    messagingSenderId: "185525679690",
-    appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCfZXFifjVKwNBplzext-C-lsfgqGJhxvQ",
+  authDomain: "meu-app-financeiro-4f6f4.firebaseapp.com",
+  projectId: "meu-app-financeiro-4f6f4",
+  storageBucket: "meu-app-financeiro-4f6f4.firebasestorage.app",
+  messagingSenderId: "185525679690",
+  appId: "1:185525679690:web:80cfc8e52b93eca9d658b3"
+};
 
 // Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
