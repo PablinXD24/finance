@@ -1,10 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos principais
+    // Elementos da sidebar e navegação
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const menuItems = document.querySelectorAll('.menu-item');
+    const pages = document.querySelectorAll('.page');
+
+    // Elementos financeiros
     const mesSelect = document.getElementById('mesSelecionado');
     const anoInput = document.getElementById('anoSelecionado');
     const listaGastos = document.getElementById('listaGastos');
     const addGastoBtn = document.getElementById('addGasto');
     const calcularBtn = document.getElementById('calcularBtn');
+    const tabsContainer = document.getElementById('tabsContainer');
+    const tabsContent = document.getElementById('tabsContent');
+    
+    let savedCalculations = JSON.parse(localStorage.getItem('savedCalculations')) || [];
 
     // Configura data atual
     const hoje = new Date();
@@ -21,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calcularBtn.addEventListener('click', calcularResumo);
     mesSelect.addEventListener('change', atualizarDiasUteis);
     anoInput.addEventListener('change', atualizarDiasUteis);
+    sidebarToggle.addEventListener('click', toggleSidebar);
 
     // Cálculo VT em tempo real
     document.getElementById('valorPassagem').addEventListener('input', calcularVTemTempoReal);
@@ -28,11 +39,35 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('diasUsadosVT').addEventListener('input', calcularVTemTempoReal);
     document.getElementById('valeTransporte').addEventListener('input', calcularVTemTempoReal);
 
+    // Navegação entre páginas
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageId = this.getAttribute('data-page');
+            
+            // Remove a classe active de todos os itens do menu
+            menuItems.forEach(i => i.parentElement.classList.remove('active'));
+            // Adiciona a classe active apenas no item clicado
+            this.parentElement.classList.add('active');
+            
+            // Esconde todas as páginas
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Mostra a página correspondente
+            document.getElementById(pageId).classList.add('active');
+        });
+    });
+
     // Inicializa
     atualizarDiasUteis();
     calcularVTemTempoReal();
+    updateSavedTabs();
 
     // Funções
+    function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+    }
+
     function adicionarGasto(nome, valor) {
         const gastoDiv = document.createElement('div');
         gastoDiv.className = 'gasto-item';
@@ -52,18 +87,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function isAnoBissexto(ano) {
-        return (ano % 4 === 0 && ano % 100 !== 0) || ano % 400 === 0;
-    }
-
     function calcularDiasUteis(mes, ano) {
-        const primeiroDia = new Date(ano, mes, 1).getDay(); // 0=Domingo, 1=Segunda...
+        const primeiroDia = new Date(ano, mes, 1).getDay();
         let diasNoMes = new Date(ano, mes + 1, 0).getDate();
         let diasUteis = 0;
 
         for (let dia = 1; dia <= diasNoMes; dia++) {
             const diaSemana = (primeiroDia + dia - 1) % 7;
-            if (diaSemana > 0 && diaSemana < 6) diasUteis++; // Segunda a Sexta
+            if (diaSemana > 0 && diaSemana < 6) diasUteis++;
         }
         return diasUteis;
     }
@@ -124,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Exibe resultados
         const mesNome = mesSelect.options[mesSelect.selectedIndex].text;
-        document.getElementById('resumoMensal').innerHTML = `
+        const resumoHTML = `
             <h3>${mesNome} ${ano}</h3>
             <p><strong>Renda Total:</strong> <span>R$ ${rendaTotal.toFixed(2)}</span></p>
             
@@ -145,10 +176,84 @@ document.addEventListener('DOMContentLoaded', function() {
             <p><strong>Saldo VT:</strong> <span class="${vtEconomizado > 0 ? 'positive' : vtEconomizado < 0 ? 'negative' : 'neutral'}">R$ ${vtEconomizado.toFixed(2)}</span></p>
         `;
 
+        document.getElementById('resumoMensal').innerHTML = resumoHTML;
+        
         const saldoElement = document.getElementById('saldoDisponivel');
         saldoElement.textContent = `R$ ${saldo.toFixed(2)}`;
         saldoElement.className = saldo > 0 ? 'positive' : saldo < 0 ? 'negative' : 'neutral';
         
         document.getElementById('resultado').style.display = 'block';
+
+        // Salva o cálculo
+        const calculationData = {
+            id: Date.now(),
+            mes: mesNome,
+            ano: ano,
+            html: resumoHTML,
+            saldo: saldo,
+            data: new Date().toLocaleString()
+        };
+        
+        savedCalculations.push(calculationData);
+        localStorage.setItem('savedCalculations', JSON.stringify(savedCalculations));
+        updateSavedTabs();
+    }
+
+    function updateSavedTabs() {
+        tabsContainer.innerHTML = '';
+        tabsContent.innerHTML = '';
+        
+        savedCalculations.forEach(calc => {
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.textContent = `${calc.mes} ${calc.ano}`;
+            tab.dataset.id = calc.id;
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'tab-close';
+            closeBtn.innerHTML = '×';
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeTab(calc.id);
+            });
+            tab.appendChild(closeBtn);
+            
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelector(`.tab-content[data-id="${calc.id}"]`).classList.add('active');
+            });
+            
+            tabsContainer.appendChild(tab);
+            
+            const content = document.createElement('div');
+            content.className = 'tab-content';
+            content.dataset.id = calc.id;
+            content.innerHTML = calc.html;
+            
+            const saldoDiv = document.createElement('div');
+            saldoDiv.className = 'saldo-final';
+            saldoDiv.innerHTML = `
+                <span>Saldo Disponível:</span>
+                <span class="${calc.saldo > 0 ? 'positive' : calc.saldo < 0 ? 'negative' : 'neutral'}">R$ ${calc.saldo.toFixed(2)}</span>
+            `;
+            content.appendChild(saldoDiv);
+            
+            tabsContent.appendChild(content);
+        });
+        
+        if (savedCalculations.length > 0) {
+            const lastTab = tabsContainer.lastChild;
+            const lastContent = tabsContent.lastChild;
+            lastTab.classList.add('active');
+            lastContent.classList.add('active');
+        }
+    }
+
+    function removeTab(id) {
+        savedCalculations = savedCalculations.filter(calc => calc.id !== id);
+        localStorage.setItem('savedCalculations', JSON.stringify(savedCalculations));
+        updateSavedTabs();
     }
 });
