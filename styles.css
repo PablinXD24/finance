@@ -41,10 +41,6 @@ header {
     text-align: center;
 }
 
-header h1 {
-    margin-bottom: 15px;
-}
-
 .periodo {
     display: flex;
     justify-content: center;
@@ -74,7 +70,6 @@ h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.3em;
 }
 
 .form-group {
@@ -85,7 +80,6 @@ label {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
-    color: var(--text-color);
 }
 
 input, select {
@@ -96,12 +90,6 @@ input, select {
     font-size: 16px;
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
-    transition: border 0.3s;
-}
-
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--highlight-color);
 }
 
 button {
@@ -147,7 +135,6 @@ button:hover {
 .gasto-item button {
     background: var(--danger-color);
     padding: 8px;
-    width: auto;
 }
 
 .vt-calculado {
@@ -164,8 +151,15 @@ button:hover {
     justify-content: space-between;
 }
 
-.vt-calculado span {
-    font-weight: bold;
+.vt-info {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.vt-info small {
+    font-size: 0.8em;
+    color: #aaa;
 }
 
 .resultado {
@@ -185,49 +179,6 @@ button:hover {
     border-top: 2px solid var(--border-color);
 }
 
-#resumoMensal {
-    margin-top: 15px;
-}
-
-#resumoMensal h3 {
-    color: var(--highlight-color);
-    margin-bottom: 10px;
-}
-
-#resumoMensal p {
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-}
-
-#resumoMensal strong {
-    color: var(--text-color);
-}
-
-.lista-gastos {
-    margin: 10px 0 15px 20px;
-}
-
-.lista-gastos li {
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-}
-
-small {
-    color: #aaa;
-    font-size: 0.85em;
-}
-
-/* Cores para valores */
-.positive {
-    color: var(--success-color);
-}
-
-.negative {
-    color: var(--danger-color);
-}
-
-.neutral {
-    color: var(--warning-color);
-}
+.positive { color: var(--success-color); }
+.negative { color: var(--danger-color); }
+.neutral { color: var(--warning-color); }
