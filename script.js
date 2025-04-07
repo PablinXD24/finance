@@ -78,6 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageId === 'dashboard') {
                 updateDashboard();
             }
+            
+            // Ajusta o tamanho do iframe quando a aba de anotações é aberta
+            if (pageId === 'anotacoes') {
+                adjustIframeSize();
+            }
         });
     });
 
@@ -97,6 +102,21 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
         });
     });
+
+    // Função para ajustar o tamanho do iframe
+    function adjustIframeSize() {
+        const iframe = document.querySelector('#anotacoes iframe');
+        if (iframe) {
+            const tabTitleHeight = document.querySelector('.tab-title').offsetHeight;
+            iframe.style.height = `calc(100vh - ${tabTitleHeight + 40}px)`;
+        }
+    }
+
+    // Função para alternar a sidebar
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('collapsed');
+        adjustIframeSize();
+    }
 
     // Função para login com Google
     function signInWithGoogle() {
@@ -202,11 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
             appContainer.style.display = 'none';
         }
     });
-
-    // Função para alternar a sidebar
-    function toggleSidebar() {
-        document.querySelector('.sidebar').classList.toggle('collapsed');
-    }
 
     // Função para adicionar gasto
     function adicionarGasto(nome = '', valor = 0, categoria = 'outros') {
@@ -768,4 +783,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Inicializa cálculos
     atualizarDiasUteis();
+    
+    // Ajusta o iframe quando a página é carregada
+    window.addEventListener('load', adjustIframeSize);
+    window.addEventListener('resize', adjustIframeSize);
 });
