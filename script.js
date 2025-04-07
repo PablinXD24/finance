@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const settingsUserPhoto = document.getElementById('settings-user-photo');
     const userEmail = document.getElementById('user-email');
     const userNameInput = document.getElementById('user-name');
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
     
     // Elementos financeiros
     const mesSelect = document.getElementById('mesSelecionado');
@@ -62,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     googleLoginBtn.addEventListener('click', signInWithGoogle);
     exportPDFBtn.addEventListener('click', exportToPDF);
     exportExcelBtn.addEventListener('click', exportToExcel);
+    mobileMenuToggle.addEventListener('click', toggleMobileMenu);
 
     // Configura navegação entre páginas
     document.querySelectorAll('.menu-item').forEach(item => {
@@ -83,6 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageId === 'anotacoes') {
                 adjustIframeSize();
             }
+            
+            // Fecha o menu mobile ao selecionar uma página
+            if (window.innerWidth <= 992) {
+                sidebar.classList.remove('active');
+            }
         });
     });
 
@@ -103,12 +111,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Função para alternar menu mobile
+    function toggleMobileMenu() {
+        sidebar.classList.toggle('active');
+    }
+
     // Função para ajustar o tamanho do iframe
     function adjustIframeSize() {
         const iframe = document.querySelector('#anotacoes iframe');
         if (iframe) {
             const tabTitleHeight = document.querySelector('.tab-title').offsetHeight;
-            iframe.style.height = `calc(100vh - ${tabTitleHeight + 40}px)`;
+            const mobileHeaderHeight = window.innerWidth <= 992 ? document.querySelector('.mobile-header').offsetHeight : 0;
+            iframe.style.height = `calc(100vh - ${tabTitleHeight + mobileHeaderHeight + 40}px)`;
         }
     }
 
@@ -347,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 responsive: true,
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: window.innerWidth <= 768 ? 'bottom' : 'right',
                         labels: {
                             color: '#e6e6e6'
                         }
