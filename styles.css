@@ -279,6 +279,15 @@ nav ul li i {
     display: block;
 }
 
+.page#anotacoes {
+    padding: 0;
+}
+
+.page#anotacoes .container-page {
+    padding: 20px;
+    height: 100%;
+}
+
 .container-page {
     max-width: 1000px;
     margin: 0 auto;
@@ -734,6 +743,16 @@ input:checked + .slider:before {
     background-color: var(--success-color);
 }
 
+/* Estilos para a página de anotações */
+.page#anotacoes iframe {
+    width: 100%;
+    height: calc(100vh - 100px);
+    border: none;
+    border-radius: 8px;
+    background-color: var(--card-color);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .modal-content {
@@ -767,6 +786,10 @@ input:checked + .slider:before {
         padding: 10px;
     }
     
+    .page#anotacoes {
+        padding: 0;
+    }
+    
     .periodo {
         flex-direction: column;
     }
@@ -795,5 +818,9 @@ input:checked + .slider:before {
     
     .export-buttons {
         flex-direction: column;
+    }
+    
+    .page#anotacoes iframe {
+        height: calc(100vh - 80px);
     }
 }
